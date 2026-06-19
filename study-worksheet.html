@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNC1W Interactive Study Worksheet</title>
+<style>
+:root{
+  --bg:#0f172a; --panel:#1e293b; --panel2:#273449; --ink:#e2e8f0; --muted:#94a3b8;
+  --brand:#6366f1; --brand2:#8b5cf6; --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+  --line:#334155;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  background:linear-gradient(160deg,#0f172a,#1e1b4b);color:var(--ink);min-height:100vh;}
+header{padding:28px 20px 16px;text-align:center}
+header h1{margin:0;font-size:clamp(22px,4vw,34px);font-weight:800;
+  background:linear-gradient(90deg,#a5b4fc,#c4b5fd,#f0abfc);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:0 16px 18px;max-width:1000px;margin:0 auto}
+.tab{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;transition:.2s;user-select:none}
+.tab:hover{border-color:var(--brand)}
+.tab.active{background:linear-gradient(90deg,var(--brand),var(--brand2));border-color:transparent;color:#fff;box-shadow:0 4px 18px rgba(99,102,241,.4)}
+.wrap{max-width:920px;margin:0 auto;padding:0 18px 60px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:22px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card h2{margin:0 0 4px;font-size:21px}
+.card .desc{color:var(--muted);font-size:14px;margin-bottom:18px}
+.panel{display:none}
+.panel.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.btn{cursor:pointer;border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;
+  background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;transition:.15s}
+.btn:hover{filter:brightness(1.1)}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.feedback{margin-top:14px;font-weight:700;min-height:22px}
+.feedback.good{color:var(--good)}
+.feedback.bad{color:var(--bad)}
+.sortlist{list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:8px}
+.sortlist li{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;
+  display:flex;align-items:center;gap:12px;cursor:grab;font-weight:600;transition:.15s}
+.sortlist li:active{cursor:grabbing}
+.sortlist li.drag{opacity:.4}
+.sortlist li.over{border-color:var(--brand);background:#312e81}
+.sortlist li.correct{border-color:var(--good);background:#14532d}
+.sortlist li.wrong{border-color:var(--bad);background:#7f1d1d}
+.handle{color:var(--muted);font-size:18px;cursor:grab}
+.idx{width:26px;height:26px;flex:none;border-radius:8px;background:var(--brand);display:grid;place-items:center;font-size:13px;font-weight:800}
+.tag{margin-left:auto;font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.chain{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin-bottom:16px}
+.slot{flex:1;min-width:130px;min-height:96px;border:2px dashed var(--line);border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;text-align:center}
+.slot .role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.slot.over{border-color:var(--brand);background:#312e81}
+.slot.filled{border-style:solid}
+.slot.correct{border-color:var(--good);background:#14532d}
+.slot.wrong{border-color:var(--bad);background:#7f1d1d}
+.arrow{display:flex;align-items:center;color:var(--brand);font-size:26px;font-weight:800}
+.bank{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;cursor:grab;font-weight:600;font-size:14px;user-select:none}
+.chip.drag{opacity:.4}
+.chip .emoji{margin-right:6px}
+.placed{font-size:26px}
+.placed .lbl{font-size:13px;display:block;margin-top:2px}
+.bohr-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+select,input[type=number]{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+.bohr-stage{display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:center}
+.atomwrap{position:relative;width:280px;height:280px;flex:none}
+svg{max-width:100%}
+.bohr-inputs{display:flex;flex-direction:column;gap:10px;min-width:200px}
+.bohr-inputs label{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.bohr-inputs input{width:90px}
+.mini{font-size:12px;color:var(--muted)}
+.qbox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.qbox .q{font-weight:700;margin-bottom:10px}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:.15s}
+.opt:hover{border-color:var(--brand)}
+.opt.sel{border-color:var(--brand);background:#312e81}
+.opt.correct{border-color:var(--good);background:#14532d}
+.opt.wrong{border-color:var(--bad);background:#7f1d1d}
+.ohm-card{text-align:center}
+.ohm-q{font-size:18px;font-weight:700;margin:6px 0 14px}
+.score-pill{display:inline-block;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:18px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<header>
+  <h1>SNC1W Interactive Study Worksheet</h1>
+  <p>Grade 9 Science · Ecology · Chemistry · Electricity · Space · Drag, build, and check your answers</p>
+</header>
+
+<div class="tabs" id="tabs">
+  <div class="tab active" data-p="solar">🪐 Solar System</div>
+  <div class="tab" data-p="circuit">⚡ Circuits</div>
+  <div class="tab" data-p="bohr">⚛️ Bohr-Rutherford</div>
+  <div class="tab" data-p="food">🌿 Food Chain</div>
+  <div class="tab" data-p="graph">📈 Ecology Graphs</div>
+</div>
+
+<div class="wrap">
+
+  <section class="panel active" id="solar">
+    <div class="card">
+      <h2>Order the Solar System</h2>
+      <div class="desc">Drag the planets into the correct order, starting closest to the Sun (top) and ending farthest away (bottom). Then check your answer.</div>
+      <ul class="sortlist" id="planetList"></ul>
+      <div class="row">
+        <button class="btn" onclick="checkPlanets()">Check order</button>
+        <button class="btn ghost" onclick="shufflePlanets()">Shuffle</button>
+      </div>
+      <div class="feedback" id="planetFb"></div>
+      <div class="legend">
+        <span><span class="dot" style="background:#f59e0b"></span>Rocky planets in orange · <span class="dot" style="background:#38bdf8"></span>Gas planets in blue (shown after checking)</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="circuit">
+    <div class="card">
+      <h2>Build a Circuit</h2>
+      <div class="desc">Drag the components into the loop to build a complete <b>series circuit</b>: it needs a cell, a switch, and a bulb. Then answer the questions.</div>
+      <div style="text-align:center;margin-bottom:8px" class="mini">The loop (current flows around it):</div>
+      <div class="bank" id="circSlots" style="justify-content:center;min-height:60px;border:2px dashed var(--line);border-radius:14px;padding:12px"></div>
+      <div class="mini" style="text-align:center;margin:8px 0">Component bank:</div>
+      <div class="bank" id="circBank" style="justify-content:center"></div>
+      <div class="row"><button class="btn" onclick="checkCircuit()">Check circuit</button><button class="btn ghost" onclick="resetCircuit()">Reset</button></div>
+      <div class="feedback" id="circFb"></div>
+    </div>
+    <div class="card ohm-card">
+      <h2>Ohm's Law Practice</h2>
+      <div class="desc">Use <b>V = I × R</b>. Type the answer and press Check. A new question is generated each time.</div>
+      <div class="ohm-q" id="ohmQ"></div>
+      <div class="row" style="justify-content:center">
+        <input type="number" id="ohmA" placeholder="answer" step="any" style="width:120px">
+        <span id="ohmUnit" class="mini"></span>
+        <button class="btn" onclick="checkOhm()">Check</button>
+        <button class="btn ghost" onclick="newOhm()">New question</button>
+      </div>
+      <div class="feedback" id="ohmFb"></div>
+      <div class="score-pill" id="ohmScore">Score: 0 / 0</div>
+    </div>
+    <div class="card">
+      <h2>Circuit Concepts</h2>
+      <div class="desc">Pick the best answer for each.</div>
+      <div id="circConcepts"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="bohr">
+    <div class="card">
+      <h2>Bohr-Rutherford Diagram Practice</h2>
+      <div class="desc">Pick an element. Fill in the protons, neutrons, and how many electrons go in each shell. The diagram draws live as you type — then check your work.</div>
+      <div class="bohr-controls">
+        <label class="mini">Element:</label>
+        <select id="elSel" onchange="loadElement()"></select>
+        <span class="mini" id="elInfo"></span>
+      </div>
+      <div class="bohr-stage">
+        <div class="atomwrap"><svg id="atomSvg" viewBox="0 0 280 280"></svg></div>
+        <div class="bohr-inputs">
+          <label>Protons (p+) <input type="number" id="bP" min="0" oninput="drawAtom()"></label>
+          <label>Neutrons (n) <input type="number" id="bN" min="0"></label>
+          <label>Shell 1 e- <input type="number" id="bS1" min="0" max="2" oninput="drawAtom()"></label>
+          <label>Shell 2 e- <input type="number" id="bS2" min="0" max="8" oninput="drawAtom()"></label>
+          <label>Shell 3 e- <input type="number" id="bS3" min="0" max="8" oninput="drawAtom()"></label>
+          <button class="btn" onclick="checkBohr()">Check diagram</button>
+        </div>
+      </div>
+      <div class="feedback" id="bohrFb"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="food">
+    <div class="card">
+      <h2>Organize the Food Chain</h2>
+      <div class="desc">Drag each organism into the correct slot. Energy flows from producer → primary consumer → secondary consumer → tertiary consumer. Click a placed organism to send it back.</div>
+      <div class="chain" id="chain"></div>
+      <div class="mini" style="margin-bottom:6px">Organisms:</div>
+      <div class="bank" id="foodBank"></div>
+      <div class="row"><button class="btn" onclick="checkChain()">Check food chain</button><button class="btn ghost" onclick="resetChain()">Reset</button><button class="btn ghost" onclick="newChain()">New chain</button></div>
+      <div class="feedback" id="foodFb"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="graph">
+    <div class="card">
+      <h2>Interpreting Ecological Graphs</h2>
+      <div class="desc">Study the population graph, then answer the questions about what it shows.</div>
+      <svg id="popGraph" viewBox="0 0 520 320" style="background:var(--panel2);border-radius:12px"></svg>
+      <div id="graphQs" style="margin-top:16px"></div>
+    </div>
+  </section>
+
+</div>
+<footer>SNC1W Study Worksheet · works offline in any browser · no data leaves this page</footer>
+
+<script>
+document.getElementById('tabs').addEventListener('click', e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.p).classList.add('active');
+});
+
+/* ---- shared MCQ renderer ---- */
+function renderMCQ(containerId,list){
+  const c=document.getElementById(containerId);c.innerHTML='';
+  list.forEach((item,qi)=>{
+    const box=document.createElement('div');box.className='qbox';
+    const q=document.createElement('div');q.className='q';q.textContent=(qi+1)+'. '+item.q;box.appendChild(q);
+    const opts=document.createElement('div');opts.className='opts';
+    item.o.forEach((txt,oi)=>{
+      const o=document.createElement('div');o.className='opt';o.textContent=txt;
+      o.addEventListener('click',()=>{
+        [...opts.children].forEach(x=>x.classList.remove('sel','correct','wrong'));
+        if(oi===item.a){o.classList.add('correct');}else{o.classList.add('wrong');opts.children[item.a].classList.add('correct');}
+      });
+      opts.appendChild(o);
+    });
+    box.appendChild(opts);c.appendChild(box);
+  });
+}
+
+/* 1. SOLAR SYSTEM */
+const PLANETS=[
+  {n:'Mercury',type:'rocky'},{n:'Venus',type:'rocky'},{n:'Earth',type:'rocky'},{n:'Mars',type:'rocky'},
+  {n:'Jupiter',type:'gas'},{n:'Saturn',type:'gas'},{n:'Uranus',type:'gas'},{n:'Neptune',type:'gas'}
+];
+const planetList=document.getElementById('planetList');
+let dragEl=null;
+function renderPlanets(order){
+  planetList.innerHTML='';
+  order.forEach(p=>{
+    const li=document.createElement('li');
+    li.draggable=true; li.dataset.name=p.n; li.dataset.type=p.type;
+    li.innerHTML='<span class="handle">&#9783;</span><span class="idx">?</span><span>'+p.n+'</span><span class="tag">drag me</span>';
+    addDnd(li); planetList.appendChild(li);
+  });
+  renumber();
+}
+function renumber(){[...planetList.children].forEach((li,i)=>li.querySelector('.idx').textContent=i+1);}
+function addDnd(li){
+  li.addEventListener('dragstart',()=>{dragEl=li;li.classList.add('drag');});
+  li.addEventListener('dragend',()=>{dragEl=null;li.classList.remove('drag');[...planetList.children].forEach(x=>x.classList.remove('over'));renumber();});
+  li.addEventListener('dragover',e=>{e.preventDefault();
+    const after=getAfter(planetList,e.clientY);
+    [...planetList.children].forEach(x=>x.classList.remove('over'));
+    if(after==null){planetList.appendChild(dragEl);}else{planetList.insertBefore(dragEl,after);after.classList.add('over');}
+    renumber();
+  });
+}
+function getAfter(container,y){
+  const els=[...container.querySelectorAll('li:not(.drag)')];
+  return els.reduce((closest,child)=>{
+    const box=child.getBoundingClientRect();const offset=y-box.top-box.height/2;
+    if(offset<0&&offset>closest.offset){return{offset:offset,element:child};}else return closest;
+  },{offset:-Infinity}).element;
+}
+function shufflePlanets(){const a=[...PLANETS].sort(()=>Math.random()-0.5);renderPlanets(a);document.getElementById('planetFb').textContent='';}
+function checkPlanets(){
+  const order=[...planetList.children];const fb=document.getElementById('planetFb');let ok=true;
+  order.forEach((li,i)=>{
+    li.classList.remove('correct','wrong');
+    const right=PLANETS[i].n===li.dataset.name;
+    li.classList.add(right?'correct':'wrong'); if(!right)ok=false;
+    li.style.borderLeft='6px solid '+(li.dataset.type==='gas'?'#38bdf8':'#f59e0b');
+    li.querySelector('.tag').textContent=li.dataset.type;
+  });
+  fb.className='feedback '+(ok?'good':'bad');
+  fb.textContent=ok?'✓ Perfect! Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune.':'Not quite — green rows are right, red are in the wrong spot. Tip: My Very Educated Mother Just Served Us Noodles.';
+}
+shufflePlanets();
+
+/* 2. CIRCUITS */
+const CIRC_COMPONENTS=[
+  {id:'cell',label:'Cell',emoji:'🔋'},
+  {id:'switch',label:'Switch',emoji:'🔘'},
+  {id:'bulb',label:'Bulb',emoji:'💡'},
+  {id:'resistor',label:'Resistor',emoji:'〰️'},
+  {id:'motor',label:'Motor',emoji:'🌀'},
+];
+const circBank=document.getElementById('circBank'),circSlots=document.getElementById('circSlots');
+let circDrag=null;
+function resetCircuit(){
+  circSlots.innerHTML='';circBank.innerHTML='';document.getElementById('circFb').textContent='';
+  CIRC_COMPONENTS.forEach(c=>{
+    const chip=document.createElement('div');chip.className='chip';chip.draggable=true;chip.dataset.id=c.id;
+    chip.innerHTML='<span class="emoji">'+c.emoji+'</span>'+c.label;
+    chip.addEventListener('dragstart',()=>{circDrag=chip;chip.classList.add('drag');});
+    chip.addEventListener('dragend',()=>{circDrag=null;chip.classList.remove('drag');});
+    circBank.appendChild(chip);
+  });
+}
+circSlots.addEventListener('dragover',e=>{e.preventDefault();circSlots.style.borderColor='var(--brand)';});
+circSlots.addEventListener('dragleave',()=>circSlots.style.borderColor='var(--line)');
+circSlots.addEventListener('drop',e=>{e.preventDefault();circSlots.style.borderColor='var(--line)';
+  if(circDrag&&circDrag.parentElement!==circSlots)circSlots.appendChild(circDrag);});
+circBank.addEventListener('dragover',e=>e.preventDefault());
+circBank.addEventListener('drop',e=>{e.preventDefault();if(circDrag&&circDrag.parentElement!==circBank)circBank.appendChild(circDrag);});
+function checkCircuit(){
+  const inLoop=[...circSlots.children].map(c=>c.dataset.id);
+  const fb=document.getElementById('circFb');
+  const hasAll=['cell','switch','bulb'].every(x=>inLoop.includes(x));
+  if(hasAll){fb.className='feedback good';fb.textContent='✓ Complete series circuit! The cell pushes current, the switch opens/closes the single path, and the bulb lights. All parts sit on one loop.';}
+  else{fb.className='feedback bad';
+    const missing=['cell','switch','bulb'].filter(x=>!inLoop.includes(x));
+    fb.textContent='Incomplete — a working series circuit needs a cell, a switch, and a bulb. Still missing: '+missing.join(', ')+'.';}
+}
+resetCircuit();
+let ohmRight=0,ohmTotal=0,ohmAns=0,ohmU='';
+function newOhm(){
+  const mode=Math.floor(Math.random()*3);
+  const I=Math.floor(Math.random()*5)+1,R=Math.floor(Math.random()*8)+2,V=I*R;
+  const q=document.getElementById('ohmQ');document.getElementById('ohmA').value='';document.getElementById('ohmFb').textContent='';
+  if(mode===0){q.innerHTML='I = '+I+' A &nbsp;&middot;&nbsp; R = '+R+' Ω &nbsp;&rarr;&nbsp; find <b>V</b>';ohmAns=V;ohmU='V';}
+  else if(mode===1){q.innerHTML='V = '+V+' V &nbsp;&middot;&nbsp; R = '+R+' Ω &nbsp;&rarr;&nbsp; find <b>I</b>';ohmAns=I;ohmU='A';}
+  else{q.innerHTML='V = '+V+' V &nbsp;&middot;&nbsp; I = '+I+' A &nbsp;&rarr;&nbsp; find <b>R</b>';ohmAns=R;ohmU='Ω';}
+  document.getElementById('ohmUnit').textContent=ohmU;
+}
+function checkOhm(){
+  const v=parseFloat(document.getElementById('ohmA').value);const fb=document.getElementById('ohmFb');
+  if(isNaN(v)){fb.className='feedback bad';fb.textContent='Type a number first.';return;}
+  ohmTotal++;
+  if(Math.abs(v-ohmAns)<0.01){ohmRight++;fb.className='feedback good';fb.textContent='✓ Correct! '+ohmAns+' '+ohmU;}
+  else{fb.className='feedback bad';fb.textContent='Not quite — the answer is '+ohmAns+' '+ohmU+'. (Rearrange V = I × R.)';}
+  document.getElementById('ohmScore').textContent='Score: '+ohmRight+' / '+ohmTotal;
+}
+newOhm();
+const CIRC_MCQ=[
+  {q:'Which unit measures electric current?',o:['Volt (V)','Ampere (A)','Ohm'],a:1},
+  {q:'A circuit with only ONE path for current is called:',o:['Parallel','Series','Open'],a:1},
+  {q:'In a series circuit, if one bulb burns out the others will:',o:['Stay lit','Go out','Get brighter'],a:1},
+  {q:'Resistance (measured in ohms) does what to current?',o:['Speeds it up','Opposes / slows it','Stores it'],a:1},
+];
+renderMCQ('circConcepts',CIRC_MCQ);
+
+/* 3. BOHR-RUTHERFORD */
+const ELEMENTS=[
+  {sym:'H',name:'Hydrogen',z:1,mass:1},{sym:'He',name:'Helium',z:2,mass:4},
+  {sym:'Li',name:'Lithium',z:3,mass:7},{sym:'C',name:'Carbon',z:6,mass:12},
+  {sym:'N',name:'Nitrogen',z:7,mass:14},{sym:'O',name:'Oxygen',z:8,mass:16},
+  {sym:'F',name:'Fluorine',z:9,mass:19},{sym:'Ne',name:'Neon',z:10,mass:20},
+  {sym:'Na',name:'Sodium',z:11,mass:23},{sym:'Mg',name:'Magnesium',z:12,mass:24},
+  {sym:'Al',name:'Aluminum',z:13,mass:27},{sym:'Si',name:'Silicon',z:14,mass:28},
+  {sym:'Cl',name:'Chlorine',z:17,mass:35},{sym:'Ar',name:'Argon',z:18,mass:40},
+];
+function shellsFor(z){const s=[];let r=z;[2,8,8].forEach(cap=>{const e=Math.min(cap,r);s.push(e);r-=e;});return s;}
+const elSel=document.getElementById('elSel');
+ELEMENTS.forEach((e,i)=>{const o=document.createElement('option');o.value=i;o.textContent=e.sym+' — '+e.name+' (Z='+e.z+')';elSel.appendChild(o);});
+function loadElement(){
+  const e=ELEMENTS[elSel.value];
+  document.getElementById('elInfo').textContent='Atomic number '+e.z+' · Mass number '+e.mass;
+  ['bP','bN','bS1','bS2','bS3'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bohrFb').textContent='';drawAtom();
+}
+function drawAtom(){
+  const svg=document.getElementById('atomSvg');const cx=140,cy=140;
+  const p=+document.getElementById('bP').value||0;
+  const s=[+document.getElementById('bS1').value||0,+document.getElementById('bS2').value||0,+document.getElementById('bS3').value||0];
+  let g='<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="#6366f1"/>';
+  g+='<text x="'+cx+'" y="'+(cy-2)+'" fill="#fff" font-size="13" font-weight="700" text-anchor="middle">'+p+'p+</text>';
+  g+='<text x="'+cx+'" y="'+(cy+13)+'" fill="#c7d2fe" font-size="11" text-anchor="middle">nucleus</text>';
+  const radii=[58,92,128];
+  s.forEach((cnt,si)=>{
+    if(cnt<=0&&s.slice(si).every(x=>x<=0))return;
+    const r=radii[si];
+    g+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="#475569" stroke-width="1.5"/>';
+    for(let k=0;k<cnt;k++){const ang=(2*Math.PI/Math.max(cnt,1))*k - Math.PI/2;
+      const ex=cx+r*Math.cos(ang),ey=cy+r*Math.sin(ang);
+      g+='<circle cx="'+ex.toFixed(1)+'" cy="'+ey.toFixed(1)+'" r="6" fill="#f0abfc" stroke="#fff" stroke-width="1"/>';}
+  });
+  svg.innerHTML=g;
+}
+function checkBohr(){
+  const e=ELEMENTS[elSel.value];const correct=shellsFor(e.z);
+  const p=+document.getElementById('bP').value,n=+document.getElementById('bN').value;
+  const s=[+document.getElementById('bS1').value,+document.getElementById('bS2').value,+document.getElementById('bS3').value];
+  const fb=document.getElementById('bohrFb');const errs=[];
+  if(p!==e.z)errs.push('protons should be '+e.z);
+  if(n!==e.mass-e.z)errs.push('neutrons should be '+(e.mass-e.z)+' (mass − protons)');
+  [0,1,2].forEach(i=>{if((s[i]||0)!==(correct[i]||0))errs.push('shell '+(i+1)+' should have '+(correct[i]||0)+' e-');});
+  if(errs.length===0){fb.className='feedback good';fb.textContent='✓ Correct! '+e.name+': '+e.z+'p+, '+(e.mass-e.z)+'n, electrons '+correct.filter(x=>x>0).join(',')+'.';}
+  else{fb.className='feedback bad';fb.textContent='Check these: '+errs.join('; ')+'.';}
+}
+elSel.value=5;loadElement();
+
+/* 4. FOOD CHAIN */
+const CHAINS=[
+  [{n:'Grass',e:'🌱',role:'Producer'},{n:'Grasshopper',e:'🦗',role:'Primary consumer'},{n:'Frog',e:'🐸',role:'Secondary consumer'},{n:'Snake',e:'🐍',role:'Tertiary consumer'}],
+  [{n:'Algae',e:'🌿',role:'Producer'},{n:'Minnow',e:'🐟',role:'Primary consumer'},{n:'Bass',e:'🐠',role:'Secondary consumer'},{n:'Heron',e:'🪶',role:'Tertiary consumer'}],
+  [{n:'Clover',e:'☘️',role:'Producer'},{n:'Rabbit',e:'🐰',role:'Primary consumer'},{n:'Fox',e:'🦊',role:'Secondary consumer'},{n:'Eagle',e:'🦅',role:'Tertiary consumer'}],
+];
+const ROLES=['Producer','Primary consumer','Secondary consumer','Tertiary consumer'];
+let curChain=0,foodDrag=null;
+function renderChain(){
+  const chain=document.getElementById('chain'),bank=document.getElementById('foodBank');
+  chain.innerHTML='';bank.innerHTML='';document.getElementById('foodFb').textContent='';
+  ROLES.forEach((role,i)=>{
+    const slot=document.createElement('div');slot.className='slot';slot.dataset.role=role;slot.dataset.idx=i;
+    slot.innerHTML='<span class="role">'+role+'</span><span class="mini">drop here</span>';
+    slot.addEventListener('dragover',ev=>{ev.preventDefault();slot.classList.add('over');});
+    slot.addEventListener('dragleave',()=>slot.classList.remove('over'));
+    slot.addEventListener('drop',ev=>{ev.preventDefault();slot.classList.remove('over');
+      if(!foodDrag||slot.dataset.name)return; placeOrganism(slot,foodDrag);});
+    slot.addEventListener('click',()=>returnOrganism(slot));
+    chain.appendChild(slot);
+    if(i<ROLES.length-1){const a=document.createElement('div');a.className='arrow';a.textContent='→';chain.appendChild(a);}
+  });
+  const shuffled=[...CHAINS[curChain]].sort(()=>Math.random()-0.5);
+  shuffled.forEach(org=>bank.appendChild(makeOrgChip(org.n,org.role,org.e)));
+}
+function makeOrgChip(name,role,emoji){
+  const chip=document.createElement('div');chip.className='chip';chip.draggable=true;
+  chip.dataset.name=name;chip.dataset.role=role;chip.dataset.emoji=emoji;
+  chip.innerHTML='<span class="emoji">'+emoji+'</span>'+name;
+  chip.addEventListener('dragstart',()=>{foodDrag=chip;chip.classList.add('drag');});
+  chip.addEventListener('dragend',()=>{chip.classList.remove('drag');foodDrag=null;});
+  return chip;
+}
+function placeOrganism(slot,chip){
+  slot.dataset.name=chip.dataset.name;slot.dataset.org=chip.dataset.role;slot.dataset.emoji=chip.dataset.emoji;
+  slot.classList.add('filled');
+  slot.innerHTML='<span class="role">'+slot.dataset.role+'</span><span class="placed">'+chip.dataset.emoji+'<span class="lbl">'+chip.dataset.name+'</span></span>';
+  chip.remove();
+}
+function returnOrganism(slot){
+  if(!slot.dataset.name)return;
+  document.getElementById('foodBank').appendChild(makeOrgChip(slot.dataset.name,slot.dataset.org,slot.dataset.emoji));
+  slot.classList.remove('filled','correct','wrong');
+  const role=slot.dataset.role;
+  delete slot.dataset.name;delete slot.dataset.org;delete slot.dataset.emoji;
+  slot.innerHTML='<span class="role">'+role+'</span><span class="mini">drop here</span>';
+}
+function checkChain(){
+  const slots=[...document.querySelectorAll('#chain .slot')];const fb=document.getElementById('foodFb');
+  if(slots.some(s=>!s.dataset.name)){fb.className='feedback bad';fb.textContent='Fill every slot first.';return;}
+  let ok=true;
+  slots.forEach(s=>{s.classList.remove('correct','wrong');const right=s.dataset.org===s.dataset.role;s.classList.add(right?'correct':'wrong');if(!right)ok=false;});
+  fb.className='feedback '+(ok?'good':'bad');
+  fb.textContent=ok?'✓ Correct! Energy flows producer → primary → secondary → tertiary consumer.':'Some are out of place — the producer makes its own food and goes first; each arrow points to what eats it.';
+}
+function resetChain(){renderChain();}
+function newChain(){curChain=(curChain+1)%CHAINS.length;renderChain();}
+renderChain();
+
+/* 5. ECOLOGY GRAPH */
+function drawPopGraph(){
+  const svg=document.getElementById('popGraph');
+  const pad=44,W=520,H=320,x0=pad,y0=H-pad,xMax=W-20,yTop=24;
+  let g='';
+  g+='<line x1="'+x0+'" y1="'+y0+'" x2="'+xMax+'" y2="'+y0+'" stroke="#64748b" stroke-width="2"/>';
+  g+='<line x1="'+x0+'" y1="'+y0+'" x2="'+x0+'" y2="'+yTop+'" stroke="#64748b" stroke-width="2"/>';
+  g+='<text x="'+((x0+xMax)/2)+'" y="'+(H-8)+'" fill="#94a3b8" font-size="13" text-anchor="middle">Time →</text>';
+  g+='<text x="14" y="'+((y0+yTop)/2)+'" fill="#94a3b8" font-size="13" text-anchor="middle" transform="rotate(-90 14 '+((y0+yTop)/2)+')">Population size</text>';
+  const ccY=yTop+40;
+  g+='<line x1="'+x0+'" y1="'+ccY+'" x2="'+xMax+'" y2="'+ccY+'" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 5"/>';
+  g+='<text x="'+(xMax-4)+'" y="'+(ccY-6)+'" fill="#f59e0b" font-size="12" text-anchor="end">Carrying capacity</text>';
+  let path='';
+  for(let i=0;i<=100;i++){
+    const t=i/100;const xx=x0+(xMax-x0)*t;
+    const L=(y0-ccY);const k=10;const mid=0.4;
+    const val=L/(1+Math.exp(-k*(t-mid)));
+    const yy=y0-val;
+    path+=(i===0?'M':'L')+xx.toFixed(1)+' '+yy.toFixed(1)+' ';
+  }
+  g+='<path d="'+path+'" fill="none" stroke="#a5b4fc" stroke-width="3"/>';
+  svg.innerHTML=g;
+}
+drawPopGraph();
+const GRAPH_MCQ=[
+  {q:'The dashed orange line is the maximum population the environment can support. What is it called?',o:['Natality rate','Carrying capacity','Biotic potential'],a:1},
+  {q:'What is the population curve doing in the early (left) part of the graph?',o:['Decreasing quickly','Growing rapidly','Staying flat'],a:1},
+  {q:'Why does the curve level off near the dashed line?',o:['Unlimited resources','Limiting factors slow growth','The species went extinct'],a:1},
+  {q:'Which could cause the carrying capacity to DECREASE?',o:['More food and space','A drought or habitat loss','Fewer predators'],a:1},
+];
+renderMCQ('graphQs',GRAPH_MCQ);
+</script>
+</body>
+</html>

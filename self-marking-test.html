@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNC1W Self-Marking Test</title>
+<style>
+:root{--bg:#0f172a;--panel:#1e293b;--panel2:#273449;--ink:#e2e8f0;--muted:#94a3b8;
+  --brand:#6366f1;--brand2:#8b5cf6;--good:#22c55e;--bad:#ef4444;--warn:#f59e0b;--line:#334155;}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+  background:linear-gradient(160deg,#0f172a,#1e1b4b);color:var(--ink);min-height:100vh}
+.wrap{max-width:780px;margin:0 auto;padding:30px 18px 70px}
+header{text-align:center;margin-bottom:24px}
+header h1{margin:0;font-size:clamp(22px,4vw,32px);font-weight:800;
+  background:linear-gradient(90deg,#a5b4fc,#c4b5fd,#f0abfc);-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{color:var(--muted);font-size:14px;margin:6px 0 0}
+.bar{position:sticky;top:0;z-index:5;background:rgba(15,23,42,.9);backdrop-filter:blur(6px);
+  border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.progress{flex:1;height:8px;background:var(--panel2);border-radius:999px;overflow:hidden;margin:0 14px}
+.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:.3s}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.q .num{font-size:12px;color:var(--brand2);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.q .txt{font-weight:700;margin:6px 0 14px;font-size:16px;line-height:1.4}
+.opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;cursor:pointer;margin-bottom:9px;transition:.15s}
+.opt:hover{border-color:var(--brand);background:var(--panel2)}
+.opt input{accent-color:var(--brand);width:18px;height:18px;flex:none}
+.opt.sel{border-color:var(--brand);background:#312e81}
+.opt.correct{border-color:var(--good);background:#14532d}
+.opt.wrong{border-color:var(--bad);background:#7f1d1d}
+.opt .letter{font-weight:800;color:var(--muted);width:18px}
+.expl{margin-top:10px;font-size:13px;color:var(--muted);border-left:3px solid var(--brand);padding:6px 0 6px 12px;display:none}
+.confirm{background:var(--panel);border:1px solid var(--warn);border-radius:16px;padding:18px 20px;margin:6px 0 16px;display:flex;gap:12px;align-items:flex-start}
+.confirm input{accent-color:var(--warn);width:20px;height:20px;flex:none;margin-top:2px}
+.confirm label{font-size:14px;line-height:1.5}
+.btn{cursor:pointer;border:none;border-radius:12px;padding:14px 26px;font-size:16px;font-weight:800;
+  background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff;transition:.15s;width:100%}
+.btn:hover{filter:brightness(1.1)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--ink)}
+.result{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px;text-align:center;margin-bottom:18px;display:none}
+.result.show{display:block;animation:pop .4s ease}
+@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.ring{font-size:54px;font-weight:900;margin:6px 0}
+.result .pct{font-size:18px;color:var(--muted)}
+.result .msg{margin:12px 0 0;font-size:16px;font-weight:700}
+.hint{color:var(--bad);font-size:13px;text-align:center;margin-top:8px;min-height:18px}
+.tag{display:inline-block;font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>SNC1W Self-Marking Test</h1>
+  <p>Grade 9 Science · 20 questions · automatically marked in your browser</p>
+</header>
+
+<div class="bar">
+  <span id="answered">0 answered</span>
+  <div class="progress"><div id="pbar"></div></div>
+  <span>20 total</span>
+</div>
+
+<div id="quiz"></div>
+
+<div class="result" id="result">
+  <div class="pct">Your score</div>
+  <div class="ring" id="scoreNum">0 / 20</div>
+  <div class="pct" id="scorePct">0%</div>
+  <div class="msg" id="scoreMsg"></div>
+  <div style="margin-top:18px"><button class="btn ghost" onclick="retake()">Retake test</button></div>
+</div>
+
+<div class="confirm" id="confirmBox">
+  <input type="checkbox" id="confirmChk" onchange="updateSubmit()">
+  <label for="confirmChk">I have <b>double-checked all my answers</b> and I am ready to submit. (You can't change answers after submitting.)</label>
+</div>
+<button class="btn" id="submitBtn" disabled onclick="submitTest()">Submit & mark my test</button>
+<div class="hint" id="hint"></div>
+
+</div>
+<script>
+/* New questions — distinct from the Kahoot bank */
+const QUESTIONS=[
+  {u:'Ecology',q:'A pond contains fish, frogs, water, sunlight, and rocks. Which of these is a BIOTIC factor?',
+   o:['Water','Sunlight','Frogs','Rocks'],a:2,e:'Biotic factors are living things. Frogs are alive; water, sunlight and rocks are abiotic (non-living).'},
+  {u:'Ecology',q:'Bees collect nectar from a flower while pollinating it, helping the plant reproduce. This relationship is:',
+   o:['Parasitism','Mutualism','Competition','Predation'],a:1,e:'Both the bee (food) and the flower (pollination) benefit, so it is mutualism.'},
+  {u:'Ecology',q:'In an energy pyramid, which level contains the MOST available energy?',
+   o:['Tertiary consumers','Secondary consumers','Primary consumers','Producers'],a:3,e:'Producers form the base of the pyramid and hold the most energy; energy is lost at each level up.'},
+  {u:'Ecology',q:'A population of deer suddenly drops after a harsh winter reduces food. The reduced food supply is best described as a:',
+   o:['Limiting factor','Biotic potential','Producer','Trophic level'],a:0,e:'A limiting factor (like food, water, or space) restricts how large a population can grow.'},
+  {u:'Ecology',q:'Which human activity most directly adds extra carbon dioxide to the atmosphere?',
+   o:['Planting trees','Burning fossil fuels','Recycling paper','Composting food'],a:1,e:'Burning fossil fuels in cars and factories releases CO2, a major negative impact on the carbon cycle.'},
+  {u:'Chemistry',q:'A sealed bottle of water is left in a freezer. According to the particle theory, as it freezes the particles:',
+   o:['Move faster and spread out','Move slower and lock into a fixed pattern','Disappear','Turn into a gas'],a:1,e:'Cooling removes energy, so particles slow down and arrange into the fixed pattern of a solid.'},
+  {u:'Chemistry',q:'Which observation is the BEST evidence that a chemical change has taken place?',
+   o:['An ice cube melts','A nail bends','Bubbles of a new gas form when two liquids mix','Sugar dissolves in water'],a:2,e:'Producing a new gas signals a new substance formed — evidence of a chemical change. The others are physical changes.'},
+  {u:'Chemistry',q:'How many atoms in total are in one formula unit of CaCl₂?',
+   o:['2','3','4','1'],a:1,e:'1 calcium + 2 chlorine = 3 atoms total.'},
+  {u:'Chemistry',q:'An element has 11 protons. How are its electrons arranged in a Bohr-Rutherford diagram?',
+   o:['2, 9','2, 8, 1','8, 3','11'],a:1,e:'Shells fill 2, then 8, then the rest: 2, 8, 1 for sodium (11 electrons).'},
+  {u:'Chemistry',q:'Where in the atom are the protons and neutrons located?',
+   o:['In the electron shells','In the nucleus','Outside the atom','In the bonds'],a:1,e:'Protons and neutrons sit together in the central nucleus; electrons orbit in shells.'},
+  {u:'Chemistry',q:'Which is a PHYSICAL property of a substance?',
+   o:['Flammability','Ability to rust','Reacts with acid','Melting point'],a:3,e:'Melting point can be measured without changing what the substance is — a physical property. The others describe chemical behaviour.'},
+  {u:'Electricity',q:'A circuit has a current of 4 A flowing through a 5 Ω resistor. What is the voltage?',
+   o:['9 V','20 V','1.25 V','0.8 V'],a:1,e:'V = I × R = 4 A × 5 Ω = 20 V.'},
+  {u:'Electricity',q:'A 9 V battery drives a current through a 3 Ω resistor. What is the current?',
+   o:['27 A','6 A','3 A','12 A'],a:2,e:'I = V ÷ R = 9 V ÷ 3 Ω = 3 A.'},
+  {u:'Electricity',q:'Which statement about a PARALLEL circuit is true?',
+   o:['There is only one path for current','If one bulb burns out the others stay lit','Current cannot flow','It has no battery'],a:1,e:'Parallel circuits have multiple paths, so one bulb going out does not break the others.'},
+  {u:'Electricity',q:'In schematic diagrams, a long thin line beside a short thick line is the symbol for a:',
+   o:['Switch','Resistor','Cell (battery)','Bulb'],a:2,e:'The long/short parallel-line symbol represents a single cell of a battery.'},
+  {u:'Space',q:'Which list places the planets in the correct order moving OUTWARD from the Sun?',
+   o:['Earth, Mercury, Mars, Venus','Mercury, Venus, Earth, Mars, Jupiter','Jupiter, Mars, Earth, Venus, Mercury','Venus, Earth, Mercury, Mars, Saturn'],a:1,e:'Order from the Sun: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune.'},
+  {u:'Space',q:'Saturn and Jupiter are best classified as:',
+   o:['Rocky (terrestrial) planets','Gas (Jovian) planets','Dwarf planets','Moons'],a:1,e:'The four outer planets — Jupiter, Saturn, Uranus, Neptune — are large gas giants.'},
+  {u:'Space',q:'The redshift of distant galaxies (they are moving away from us) is evidence that the universe is:',
+   o:['Shrinking','Standing still','Expanding','Cooling to absolute zero'],a:2,e:'Galaxies moving apart supports the Big Bang Theory: the universe is expanding.'},
+  {u:'Space',q:'Why do the constellations visible at night change throughout the year?',
+   o:['The stars physically move each month','Earth orbits the Sun, so we face different parts of space','The Sun changes colour','Constellations are man-made'],a:1,e:'As Earth orbits the Sun, the night side faces different regions of the sky across the seasons.'},
+  {u:'Space',q:'How is Polaris (the North Star) most easily located in the night sky?',
+   o:['It is the brightest star','Follow the pointer stars of the Big Dipper','It is directly overhead everywhere','It is red in colour'],a:1,e:'The two end stars of the Big Dipper’s cup point straight to Polaris, which sits above the North Pole.'},
+];
+
+const quiz=document.getElementById('quiz');
+let submitted=false;
+function buildQuiz(){
+  quiz.innerHTML='';
+  QUESTIONS.forEach((item,i)=>{
+    const card=document.createElement('div');card.className='q';card.id='q'+i;
+    let html='<div class="num">Question '+(i+1)+'<span class="tag">'+item.u+'</span></div><div class="txt">'+item.q+'</div>';
+    item.o.forEach((opt,oi)=>{
+      const L=['A','B','C','D'][oi];
+      html+='<label class="opt" data-q="'+i+'" data-o="'+oi+'">'+
+        '<input type="radio" name="q'+i+'" value="'+oi+'">'+
+        '<span class="letter">'+L+'</span><span>'+opt+'</span></label>';
+    });
+    html+='<div class="expl" id="expl'+i+'"></div>';
+    card.innerHTML=html;
+    quiz.appendChild(card);
+  });
+  quiz.querySelectorAll('.opt').forEach(o=>{
+    o.addEventListener('click',()=>{
+      if(submitted)return;
+      const qi=o.dataset.q;
+      quiz.querySelectorAll('.opt[data-q="'+qi+'"]').forEach(x=>x.classList.remove('sel'));
+      o.classList.add('sel');
+      o.querySelector('input').checked=true;
+      updateProgress();
+    });
+  });
+}
+function updateProgress(){
+  let n=0;
+  QUESTIONS.forEach((_,i)=>{if(document.querySelector('input[name="q'+i+'"]:checked'))n++;});
+  document.getElementById('answered').textContent=n+' answered';
+  document.getElementById('pbar').style.width=(n/QUESTIONS.length*100)+'%';
+}
+function updateSubmit(){
+  document.getElementById('submitBtn').disabled=!document.getElementById('confirmChk').checked;
+}
+function submitTest(){
+  if(!document.getElementById('confirmChk').checked){
+    document.getElementById('hint').textContent='Please confirm you double-checked your answers first.';return;}
+  let unanswered=[];
+  QUESTIONS.forEach((_,i)=>{if(!document.querySelector('input[name="q'+i+'"]:checked'))unanswered.push(i+1);});
+  if(unanswered.length){
+    document.getElementById('hint').textContent='You still have '+unanswered.length+' unanswered question(s): '+unanswered.join(', ')+'. They will be marked wrong if you continue.';
+    if(!confirm('You have unanswered questions ('+unanswered.join(', ')+'). Submit anyway?'))return;
+  }
+  submitted=true;
+  let score=0;
+  QUESTIONS.forEach((item,i)=>{
+    const sel=document.querySelector('input[name="q'+i+'"]:checked');
+    const chosen=sel?+sel.value:-1;
+    const opts=document.querySelectorAll('.opt[data-q="'+i+'"]');
+    opts.forEach(o=>{
+      const oi=+o.dataset.o;o.style.pointerEvents='none';
+      if(oi===item.a)o.classList.add('correct');
+      if(oi===chosen&&chosen!==item.a)o.classList.add('wrong');
+    });
+    if(chosen===item.a)score++;
+    const expl=document.getElementById('expl'+i);
+    expl.style.display='block';
+    expl.innerHTML=(chosen===item.a?'<b style="color:var(--good)">Correct.</b> ':'<b style="color:var(--bad)">Incorrect.</b> ')+item.e;
+  });
+  const pct=Math.round(score/QUESTIONS.length*100);
+  document.getElementById('scoreNum').textContent=score+' / '+QUESTIONS.length;
+  document.getElementById('scorePct').textContent=pct+'%';
+  let msg;
+  if(pct>=80)msg='Excellent work! 🎉 You really know this material.';
+  else if(pct>=60)msg='Good effort — review the ones you missed and try again.';
+  else msg='Keep studying — check the explanations below for each question.';
+  document.getElementById('scoreMsg').textContent=msg;
+  const r=document.getElementById('result');r.classList.add('show');
+  document.getElementById('confirmBox').style.display='none';
+  document.getElementById('submitBtn').style.display='none';
+  document.getElementById('hint').textContent='';
+  r.scrollIntoView({behavior:'smooth'});
+}
+function retake(){
+  submitted=false;
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('confirmBox').style.display='flex';
+  document.getElementById('submitBtn').style.display='block';
+  document.getElementById('confirmChk').checked=false;
+  updateSubmit();
+  buildQuiz();updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+buildQuiz();updateProgress();
+</script>
+</body>
+</html>
